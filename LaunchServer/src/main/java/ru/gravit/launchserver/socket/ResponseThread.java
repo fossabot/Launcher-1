@@ -93,8 +93,9 @@ public final class ResponseThread implements Runnable {
 
     @Override
     public void run() {
+        String ip = IOHelper.getIP(socket.getRemoteSocketAddress());
         if (!server.serverSocketHandler.logConnections)
-            LogHelper.debug("Connection from %s", IOHelper.getIP(socket.getRemoteSocketAddress()));
+            LogHelper.debug("Connection from %s", ip);
 
         // Process connection
         boolean cancelled = false;
@@ -116,6 +117,7 @@ public final class ResponseThread implements Runnable {
             }
         } catch (Exception e) {
             savedError = e;
+            Fail2Banner.fail2(ip);
             LogHelper.error(e);
         } finally {
             IOHelper.close(socket);

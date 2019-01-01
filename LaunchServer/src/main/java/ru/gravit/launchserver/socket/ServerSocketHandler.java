@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import ru.gravit.utils.helper.CommonHelper;
+import ru.gravit.utils.helper.IOHelper;
 import ru.gravit.utils.helper.LogHelper;
 import ru.gravit.launcher.managers.GarbageManager;
 import ru.gravit.launchserver.LaunchServer;
@@ -89,7 +90,7 @@ public final class ServerSocketHandler implements Runnable, AutoCloseable {
 
             // Set socket params
             serverSocket.setReuseAddress(true);
-            serverSocket.setPerformancePreferences(1, 0, 2);
+            //serverSocket.setPerformancePreferences(1, 0, 2);
             //serverSocket.setReceiveBufferSize(0x10000);
             serverSocket.bind(server.config.getSocketAddress());
             LogHelper.info("Server socket thread successfully started");
@@ -104,6 +105,13 @@ public final class ServerSocketHandler implements Runnable, AutoCloseable {
                     continue; // Listener didn't accepted this connection
 
                 // Reply in separate thread
+                String ip = IOHelper.getIP(socket.getRemoteSocketAddress());
+                if(!Fail2Banner.checkIP(ip))
+                {
+                    LogHelper.warning("Banned IP %s try connection",ip);
+                    socket.close();
+                    continue;
+                }
                 threadPool.execute(new ResponseThread(server, id, socket, sessionManager));
             }
         } catch (IOException e) {
@@ -111,6 +119,7 @@ public final class ServerSocketHandler implements Runnable, AutoCloseable {
             if (serverSocket.get() != null)
                 LogHelper.error(e);
         }
+        LogHelper.info("Stopping server socket thread");
     }
 
 
